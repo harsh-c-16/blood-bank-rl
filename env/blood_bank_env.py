@@ -4,6 +4,7 @@ import numpy as np
 from gymnasium import spaces
 
 from env import config as C
+from env.demand import DemandModel
 
 
 class BloodBankEnv(gym.Env):
@@ -31,14 +32,16 @@ class BloodBankEnv(gym.Env):
         self.history = np.zeros((G, C.HISTORY_DAYS))
         self.day = 0
         self.rng = np.random.default_rng()
+        self.demand_model = DemandModel(self.groups, self.rng)
 
     def expected_demand(self, weekday: int) -> np.ndarray:
         """Mean demand per group for the given weekday (0 = Monday)."""
-        return C.WEEKDAY_MEAN_TOTAL[weekday] * self.share
+        return self.demand_model.expected(weekday)
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
         self.rng = np.random.default_rng(seed)
+        self.demand_model.rng = self.rng
         self.day = 0
 
         # initial stock spread evenly over 3, 4 and 5 days of life, remainder to the freshest column
@@ -57,8 +60,7 @@ class BloodBankEnv(gym.Env):
         ordered = np.clip(np.asarray(action, dtype=np.int64).reshape(-1), 0, C.MAX_ORDER)
         self.pipeline = ordered
 
-        # placeholder: deterministic demand until the stochastic model is added
-        demand = np.round(self.expected_demand(weekday)).astype(np.int64)
+        demand = self.demand_model.sample(weekday)
         issued = self._issue_own(demand)
         substituted = np.zeros_like(demand)
         shortage = demand - issued - substituted
