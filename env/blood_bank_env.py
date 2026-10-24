@@ -80,9 +80,12 @@ class BloodBankEnv(gym.Env):
         return self._obs(), reward, False, truncated, info
 
     def _arrive(self) -> np.ndarray:
-        """Move the pipeline into stock. Placeholder: every unit arrives with full shelf life."""
+        """Move yesterday's order into stock. Each unit arrives with 3, 4 or 5 days of life left."""
         arrived = self.pipeline.copy()
-        self.stock[:, C.SHELF_LIFE - 1] += arrived
+        for g in range(len(self.groups)):
+            # drawing a life for each of the n units independently = one multinomial draw of the counts
+            counts = self.rng.multinomial(arrived[g], C.ARRIVAL_LIFE_PROBS)
+            self.stock[g, C.ARRIVAL_LIFE_VALUES - 1] += counts
         return arrived
 
     def _issue_own(self, demand: np.ndarray) -> np.ndarray:
