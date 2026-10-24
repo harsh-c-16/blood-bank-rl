@@ -62,7 +62,7 @@ class BloodBankEnv(gym.Env):
 
         demand = self.demand_model.sample(weekday)
         issued = self._issue_own(demand)
-        substituted = np.zeros_like(demand)
+        substituted = self._substitute(demand - issued) if self.substitution else np.zeros_like(demand)
         shortage = demand - issued - substituted
         expired = self._expire_and_age()
         self.history = np.concatenate([self.history[:, 1:], demand[:, None]], axis=1)
@@ -97,6 +97,24 @@ class BloodBankEnv(gym.Env):
                 self.stock[g, life] -= take
                 issued[g] += take
         return issued
+
+    def _substitute(self, unmet: np.ndarray) -> np.ndarray:
+        """Cover unmet demand with compatible donor groups, oldest units first.
+
+        Runs after every group has been served from its own stock, so a donor only
+        gives away units its own patients did not need today.
+        """
+        substituted = np.zeros_like(unmet)
+        for g, recipient in enumerate(self.groups):
+            for donor in C.COMPATIBLE_DONORS[recipient]:
+                if donor not in self.groups:
+                    continue
+                d = self.groups.index(donor)
+                for life in range(C.SHELF_LIFE):
+                    take = min(self.stock[d, life], unmet[g] - substituted[g])
+                    self.stock[d, life] -= take
+                    substituted[g] += take
+        return substituted
 
     def _expire_and_age(self) -> np.ndarray:
         """Discard units expiring today and shift the rest one day older."""
