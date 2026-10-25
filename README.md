@@ -145,10 +145,10 @@ Training variants and paired-seed comparisons are documented in `results/model_c
 
 ## Reproducibility
 
-- **Training seeds**: < 500 (no overlap with tuning or evaluation)
+- **Training seeds**: each training env is seeded with 100 × `--seed` + env index (4100–4107 multi PPO, 4700–4707 single PPO) and DQN with 53, so training never uses the tuning or evaluation seeds
 - **Tuning seeds**: 500–519 (base-stock grid search)
 - **Evaluation seeds**: 1000–1029 (30 independent 365-day episodes)
-- All randomness is seeded through `env.reset(seed=...)` and SB3 model seeds
+- All randomness is seeded through `env.reset(seed=...)` and SB3 model seeds; `reset()` without a seed continues the seeded stream
 - Trained models are committed to `models/` for exact reproduction with `SKIP_TRAIN=1`
 
 ## References
