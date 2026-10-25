@@ -2,7 +2,7 @@
 
 \subsection{Algorithms and Training}
 
-PPO~\cite{schulman2017ppo} handles the eight-group \texttt{MultiDiscrete} action space ($26^8$ joint actions); DQN~\cite{mnih2015dqn} is practical only for the single-group \texttt{Discrete(26)} comparison. Both use Stable-Baselines3~\cite{raffin2021sb3}. Final PPO models use [128, 128] networks and learning rate $3\times10^{-4}$; DQN uses [128, 128] and $5\times10^{-4}$. Budgets were 1,007,616 (multi PPO), 507,904 (single PPO), and 500,000 (DQN) steps. Training, tuning, and held-out evaluation use disjoint seeds below 500, 500--519, and 1000--1029 (30 episodes of 365 days).
+PPO~\cite{schulman2017ppo} handles the eight-group \texttt{MultiDiscrete} action space ($26^8$ joint actions); DQN~\cite{mnih2015dqn} is practical only for the single-group \texttt{Discrete(26)} comparison. Both use Stable-Baselines3~\cite{raffin2021sb3}. Final PPO models use [128, 128] networks and learning rate $3\times10^{-4}$; DQN uses [128, 128] and $5\times10^{-4}$. Budgets were 1,007,616 (multi PPO), 507,904 (single PPO), and 500,000 (DQN) steps. Training environments use their own seeds (4100--4707 for PPO, 53 for DQN), disjoint from the tuning seeds 500--519 and the held-out evaluation seeds 1000--1029 (30 episodes of 365 days).
 
 \begin{table}[!t]
 \centering
