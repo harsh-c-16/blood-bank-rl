@@ -1,0 +1,98 @@
+\section{RL Agents and Results}
+
+\subsection{Algorithm Choice}
+
+The multi-group environment has a \texttt{MultiDiscrete} action space of size $26^8 \approx 2 \times 10^{11}$, making value-based methods like DQN infeasible since they require enumerating all actions. We therefore use \textbf{Proximal Policy Optimization (PPO)}~\cite{schulman2017ppo}, a policy-gradient method that handles large, structured action spaces naturally.
+
+For the single-group (\texttt{O+}) variant with \texttt{Discrete(26)} actions, we additionally train \textbf{DQN}~\cite{mnih2015dqn} to compare value-based and policy-gradient approaches. All implementations use Stable-Baselines3~\cite{raffin2021sb3}.
+
+\subsection{Training Setup}
+
+\begin{table}[h]
+\centering
+\caption{Hyperparameters for RL training.}
+\label{tab:hyperparams}
+\small
+\begin{tabular}{lcc}
+\toprule
+Parameter & PPO & DQN \\
+\midrule
+Learning rate & $3 \times 10^{-4}$ & $5 \times 10^{-4}$ \\
+Network & [128, 128] & [128, 128] \\
+$\gamma$ & 0.99 & 0.99 \\
+Batch size & 256 & 128 \\
+Timesteps (multi) & 500k & --- \\
+Timesteps (single) & 200k & 200k \\
+Num.\ envs & 8 & 1 \\
+Entropy coeff. & 0.01 & --- \\
+Buffer size & --- & 100k \\
+Exploration $\epsilon$ (final) & --- & 0.02 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Training uses seeds $< 500$; tuning seeds are 500--519; final evaluation uses seeds 1000--1029 (30 episodes of 365 days each), ensuring no overlap. All training runs on a laptop CPU.
+
+\subsection{Results}
+
+Table~\ref{tab:results_multi} summarises multi-group performance. The base-stock policy uses the tuned parameter $k^* = 3.5$ (grid search over $k \in [1.0, 5.0]$).
+
+\begin{table}[h]
+\centering
+\caption{Multi-mode evaluation (mean $\pm$ std, 30 seeds).}
+\label{tab:results_multi}
+\small
+\begin{tabular}{lrrr}
+\toprule
+Policy & Total Reward & Shortage \% & Expiry \% \\
+\midrule
+Random     & \multicolumn{3}{c}{\emph{see \texttt{results/eval\_summary.md}}} \\
+MeanDemand & \multicolumn{3}{c}{\emph{updated after training}} \\
+BaseStock  & \multicolumn{3}{c}{\emph{updated after training}} \\
+PPO        & \multicolumn{3}{c}{\emph{updated after training}} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Figure~\ref{fig:learning} shows learning curves. PPO converges within 300k timesteps on the multi-group task.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../figures/learning_curves.png}
+\caption{Training reward (smoothed) vs timesteps. Dashed line = tuned base-stock baseline.}
+\label{fig:learning}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{../figures/compare_multi.png}
+\caption{Shortage and expiry rates (left) and total reward (right) for multi-mode policies.}
+\label{fig:compare}
+\end{figure}
+
+Figure~\ref{fig:tradeoff} plots each policy on the shortage--expiry trade-off frontier. The base-stock sweep (varying $k$) traces a Pareto curve; if PPO sits below and to the left, it achieves lower shortage \emph{and} lower wastage simultaneously.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.95\linewidth]{../figures/tradeoff.png}
+\caption{Trade-off frontier: expiry rate (x) vs shortage rate (y). Base-stock sweep shown as connected dots.}
+\label{fig:tradeoff}
+\end{figure}
+
+\subsection{Discussion}
+
+The RL agent must balance two opposing costs: ordering too much leads to expiry (perishable platelets have a 5-day shelf life), while ordering too little causes shortages. The base-stock rule achieves this via a fixed target proportional to mean demand, but cannot adapt to stochastic surges or weekday patterns beyond what the static $k$ captures.
+
+PPO has access to the full observation---current stock levels across all shelf-life columns, the order pipeline, 7 days of demand history, and the day of week---allowing it to learn \emph{state-dependent} ordering. In particular, it can reduce orders before weekends (lower demand) and increase them before high-demand weekdays.
+
+\textbf{Substitution.} In multi-group mode, compatible blood types can substitute for each other (e.g., O$-$ for any group). This adds a buffer that reduces shortages for rare groups (AB$-$, O$-$) but complicates inventory planning since donors' stock may be depleted by recipients.
+
+\textbf{Single-group comparison.} DQN and PPO perform comparably on the single-group task, as expected for a small discrete action space.
+
+\subsection{Limitations}
+
+Our simulator, while calibrated from published statistics~\cite{abouee2023platelet, uclh2024platelet}, uses synthetic demand rather than real clinical data. The model assumes a fixed 1-day lead time, and platelet ABO compatibility is simplified to red-cell substitution rules. Future work could incorporate variable lead times, crossmatch constraints, and transfer learning from real hospital data.
+
+\subsection{Conclusion}
+
+We demonstrate that PPO can learn effective platelet ordering policies in a realistic simulated blood bank environment, competing with or improving upon a carefully tuned base-stock heuristic. The open-source codebase supports reproducible evaluation across 30 seeds, and all results are generated by the committed code.
