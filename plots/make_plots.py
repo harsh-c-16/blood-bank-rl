@@ -61,7 +61,11 @@ def _load_monitor_data(log_dir: str) -> pd.DataFrame | None:
             continue
     if not dfs:
         return None
-    return pd.concat(dfs, ignore_index=True)
+    combined = pd.concat(dfs, ignore_index=True)
+    # Monitor's elapsed-time column interleaves completed episodes from parallel workers.
+    if "t" in combined.columns:
+        combined = combined.sort_values("t", kind="stable").reset_index(drop=True)
+    return combined
 
 
 def plot_learning_curves(base_stock_multi: float | None = None,
@@ -71,7 +75,7 @@ def plot_learning_curves(base_stock_multi: float | None = None,
 
     # Panel (a): PPO multi
     ax = axes[0]
-    data = _load_monitor_data(os.path.join(RES_DIR, "train_logs", "ppo_multi"))
+    data = _load_monitor_data(os.path.join(RES_DIR, "train_logs", "ppo_multi_final"))
     if data is not None and "r" in data.columns:
         rewards = data["r"].values
         smoothed = pd.Series(rewards).rolling(50, min_periods=1).mean()
@@ -88,8 +92,8 @@ def plot_learning_curves(base_stock_multi: float | None = None,
 
     # Panel (b): DQN vs PPO single
     ax = axes[1]
-    for tag, label, color in [("dqn_single", "DQN", "#4CAF50"),
-                               ("ppo_single", "PPO", "#2196F3")]:
+    for tag, label, color in [("dqn_single_final", "DQN", "#4CAF50"),
+                               ("ppo_single_final", "PPO", "#2196F3")]:
         data = _load_monitor_data(os.path.join(RES_DIR, "train_logs", tag))
         if data is not None and "r" in data.columns:
             rewards = data["r"].values
