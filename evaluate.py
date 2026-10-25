@@ -7,7 +7,6 @@ import json
 import os
 import warnings
 
-import numpy as np
 import pandas as pd
 from stable_baselines3 import PPO, DQN
 
@@ -59,7 +58,7 @@ def _evaluate_mode(mode: str, policies: dict, seeds: list) -> pd.DataFrame:
 
 
 def _summary_table(df: pd.DataFrame) -> str:
-    """Produce a markdown table of mean ± std for each policy."""
+    """Produce a markdown table of mean +/- std for each policy."""
     lines = ["| Policy | Total Reward | Shortage Rate | Expiry Rate | Avg Stock | Service Level |",
              "|--------|-------------|---------------|-------------|-----------|---------------|"]
     for policy in df["policy"].unique():
