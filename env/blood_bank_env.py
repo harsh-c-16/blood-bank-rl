@@ -40,8 +40,10 @@ class BloodBankEnv(gym.Env):
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
-        self.rng = np.random.default_rng(seed)
-        self.demand_model.rng = self.rng
+        # a new seed restarts the random stream; reset() without a seed continues it (Gymnasium convention)
+        if seed is not None:
+            self.rng = np.random.default_rng(seed)
+            self.demand_model.rng = self.rng
         self.day = 0
 
         # initial stock spread evenly over 3, 4 and 5 days of life, remainder to the freshest column

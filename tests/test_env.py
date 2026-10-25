@@ -137,3 +137,15 @@ def test_demand_overdispersed():
                 monday.append(info["demand"][0])
     ratio = np.var(monday) / np.mean(monday)
     assert ratio == pytest.approx(C.DISPERSION, rel=0.15)
+
+
+def test_unseeded_reset_continues_seeded_stream():
+    # training libraries seed only the first reset, later episodes must still be reproducible
+    def demands(env):
+        env.reset(seed=11)
+        out = []
+        for _ in range(3):
+            env.reset()
+            out.append([env.step(np.zeros(8, dtype=int))[4]["demand"].tolist() for _ in range(5)])
+        return out
+    assert demands(make_env("multi")) == demands(make_env("multi"))
