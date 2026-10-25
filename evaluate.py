@@ -152,7 +152,7 @@ def main():
     summary_text = "\n".join(summary_lines)
     print(summary_text)
 
-    with open(os.path.join("results", "eval_summary.md"), "w") as f:
+    with open(os.path.join("results", "eval_summary.md"), "w", encoding="utf-8") as f:
         f.write(summary_text)
     print(f"\nResults saved to results/eval_summary.md")
 
