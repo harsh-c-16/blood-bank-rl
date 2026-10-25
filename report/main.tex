@@ -20,7 +20,7 @@
 \maketitle
 
 \begin{abstract}
-We formulate platelet inventory management in a hospital blood bank as a Markov decision process and train reinforcement learning agents (PPO, DQN) to minimise a composite cost of shortages, wastage from expiry, and holding costs. Demand is simulated via a negative binomial model calibrated from published hospital statistics. We compare trained RL policies against random, mean-demand, and base-stock baselines on 30 evaluation seeds over 365-day episodes. Results show that PPO learns competitive ordering strategies in both multi-group (8 blood types with substitution) and single-group settings.
+We formulate platelet inventory management in a hospital blood bank as a Markov decision process and train PPO and DQN agents to balance shortages, expiry, and holding costs. Across 30 evaluation seeds of 365 days each, 1M-step multi-group PPO approaches the tuned base-stock reward while reducing expiry, and longer single-group PPO training yields a similar reward to base-stock. DQN remains slightly behind the heuristic, showing that training setup and action-space scale affect performance.
 \end{abstract}
 
 \input{sections/problem_env}
