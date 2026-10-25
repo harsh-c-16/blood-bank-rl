@@ -17,13 +17,13 @@ python -m scripts.plot_demand
 
 if [ "$SKIP_TRAIN" != "1" ]; then
     echo "=== Training PPO (multi) ==="
-    python -m agents.train_ppo --mode multi
+    python -m agents.train_ppo --mode multi --timesteps 1000000 --seed 41
 
     echo "=== Training PPO (single) ==="
-    python -m agents.train_ppo --mode single
+    python -m agents.train_ppo --mode single --timesteps 500000 --seed 47
 
     echo "=== Training DQN (single) ==="
-    python -m agents.train_dqn
+    python -m agents.train_dqn --timesteps 500000 --seed 53
 else
     echo "=== SKIP_TRAIN=1: using committed models ==="
 fi
