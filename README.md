@@ -2,7 +2,7 @@
 
 **AI Course — Assignment 2, IIT Jodhpur**
 
-**Team:** Harsh Choudhary · Aditya Gaurav
+**Team:** Harsh Chaudhari (B24CM1027) · Aditya Gaurav (B24CM1003)
 
 ---
 
@@ -52,10 +52,6 @@ blood-bank-rl/
 ├── models/                 # Trained models (.zip)
 ├── results/                # CSV, JSON, markdown outputs
 ├── figures/                # PNG figures
-├── report/                 # LaTeX report
-│   ├── main.tex
-│   ├── refs.bib
-│   └── sections/
 └── requirements.txt
 ```
 

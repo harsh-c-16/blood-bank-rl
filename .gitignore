@@ -13,3 +13,6 @@ results/train_logs/**/tb/
 *.fls
 *.fdb_latexmk
 *.synctex.gz
+
+# report is submitted separately
+report/
