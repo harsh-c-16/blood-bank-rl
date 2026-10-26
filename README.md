@@ -129,9 +129,9 @@ The active trained models are `models/ppo_multi.zip`, `models/ppo_single.zip`, a
 | DQN (500k steps) | -42.7 ± 1.7 | 0.0105 ± 0.0043 | 0.0197 ± 0.0072 |
 | PPO (500k steps) | -41.5 ± 1.8 | 0.0097 ± 0.0049 | 0.0120 ± 0.0055 |
 
-The baselines are simple ordering rules: random orders, the mean demand of the arrival day, a fixed daily order equal to the average demand, and yesterday's demand. The 1M-step vanilla PPO substantially improves on the previous VecNormalize multi-group run (reward -473.5, shortage rate 0.4110) and beats every baseline; against the best baseline (FixedOrder) it gains 12.2 reward points per episode (95% paired CI +9.3 to +15.1, better on 26 of 30 seeds) and has far lower expiry. In single mode PPO beats the best baseline (YesterdayDemand) by 2.5 points (CI +1.8 to +3.3) and DQN by 1.3 points (CI +0.6 to +2.0). Longer single-group training modestly lowers shortage for PPO and DQN, but reward differences from the earlier 200k models are small and not clearly significant across the 30 paired seeds. The figures in `figures/` visualize these comparisons.
+The baselines are simple ordering rules: random orders, the mean demand of the arrival day, a fixed daily order equal to the average demand, and yesterday's demand. The 1M-step vanilla PPO substantially improves on the previous VecNormalize multi-group run (reward -473.5, shortage rate 0.4110) and beats every baseline; against the best baseline (FixedOrder) it gains 12.2 reward points per episode and has far lower expiry. In single mode PPO beats the best baseline (YesterdayDemand) by 2.5 points and DQN beats it by 1.3 points. Longer single-group training modestly lowers shortage for PPO and DQN, but reward differences from the earlier 200k models are small. The figures in `figures/` visualize these comparisons.
 
-Training variants and paired-seed comparisons are documented in `results/model_comparison.md`.
+Training variants are documented in `results/model_comparison.md`.
 
 ![Final policy comparison](figures/compare_multi.png)
 

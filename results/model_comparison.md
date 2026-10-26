@@ -1,6 +1,6 @@
 # Model improvement experiments
 
-All policy comparisons below use the same 30 evaluation seeds (1000–1029) and the same environment and reward. Reward is better when it is less negative. Confidence intervals are 95% normal intervals for paired per-seed differences.
+All policy comparisons below use the same 30 evaluation seeds (1000–1029) and the same environment and reward. Reward is better when it is less negative.
 
 ## Multi-group PPO
 
@@ -11,7 +11,7 @@ All policy comparisons below use the same 30 evaluation seeds (1000–1029) and 
 | Updated checkpoint | 1,007,616 steps, [128, 128], learning rate 3e-4, entropy 0.01, no observation normalization | **-151.4 ± 4.8** | **0.0288 ± 0.0043** | **0.0021 ± 0.0007** |
 | Best baseline (FixedOrder) | Orders the average daily demand | -163.6 ± 7.0 | 0.0341 ± 0.0081 | 0.0481 ± 0.0088 |
 
-The updated PPO gains 322.1 reward points versus the normalized retrain (95% paired CI: +316.2 to +328.0) and 83.4 versus the original checkpoint (CI: +80.5 to +86.2). Against the best baseline (FixedOrder), reward is 12.19 points higher (CI: +9.25 to +15.14) and PPO is better on 26 of 30 seeds.
+The updated PPO gains 322.1 reward points versus the normalized retrain and 83.4 versus the original checkpoint. Against the best baseline (FixedOrder), reward is 12.19 points higher.
 
 ## Single-group PPO and DQN
 
@@ -22,7 +22,7 @@ The updated PPO gains 322.1 reward points versus the normalized retrain (95% pai
 | DQN initial | 200,000 | -43.3 ± 2.1 | 0.0131 ± 0.0057 | **0.0178 ± 0.0071** |
 | DQN updated | 500,000 | -42.7 ± 1.7 | **0.0105 ± 0.0043** | 0.0197 ± 0.0072 |
 
-Longer training lowered shortage for both algorithms. Reward changes were small and their paired confidence intervals include zero (+0.43 for PPO, CI -0.31 to +1.16; +0.53 for DQN, CI -0.21 to +1.27). DQN's expiry rate also increased. These runs do not establish a clear reward improvement over the original checkpoints; the PPO model offers the best single-group reward mean, while the best baseline (YesterdayDemand) has a mean of -44.0, 2.5 points lower than PPO (CI: +1.8 to +3.3).
+Longer training lowered shortage for both algorithms. Reward changes were small (+0.43 for PPO, +0.53 for DQN). DQN's expiry rate also increased. These runs do not show a clear reward improvement over the original checkpoints; the PPO model offers the best single-group reward mean, while the best baseline (YesterdayDemand) has a mean of -44.0, 2.5 points lower than PPO.
 
 ## Diagnosis and next step
 
