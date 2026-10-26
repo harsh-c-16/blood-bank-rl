@@ -5,7 +5,6 @@ Usage:
 
 Reads from results/ and writes to figures/.
 """
-import json
 import os
 import glob
 
@@ -161,44 +160,6 @@ def plot_comparison(csv_path: str, out_name: str, title_suffix: str):
 
 
 # --------------------------------------------------------------------------- #
-# 5. Trade-off frontier
-# --------------------------------------------------------------------------- #
-def plot_tradeoff():
-    """Expiry rate (x) vs shortage rate (y) of every evaluated policy."""
-    eval_path = os.path.join(RES_DIR, "eval_multi.csv")
-
-    if not os.path.exists(eval_path):
-        print("  Skipping tradeoff plot: required files not found")
-        return
-
-    eval_df = pd.read_csv(eval_path)
-
-    fig, ax = plt.subplots(figsize=(COL_WIDTH, COL_WIDTH * 0.8))
-
-    # Evaluated policies as points
-    colors = {"Random": "#9E9E9E", "MeanDemand": "#2196F3", "FixedOrder": "#4CAF50",
-              "YesterdayDemand": "#795548", "PPO": "#E91E63", "DQN": "#FF9800"}
-    markers = {"Random": "s", "MeanDemand": "D", "FixedOrder": "^", "YesterdayDemand": "v",
-               "PPO": "*", "DQN": "p"}
-
-    for policy in eval_df["policy"].unique():
-        sub = eval_df[eval_df["policy"] == policy]
-        ax.scatter(sub["expiry_rate"].mean(), sub["shortage_rate"].mean(),
-                  color=colors.get(policy, "#000000"),
-                  marker=markers.get(policy, "o"),
-                  s=50, zorder=5, label=policy, edgecolors="black", linewidths=0.5)
-
-    ax.set_xlabel("Expiry Rate", fontsize=7)
-    ax.set_ylabel("Shortage Rate", fontsize=7)
-    ax.set_title("Shortage vs Expiry Trade-off (Multi)", fontsize=8)
-    ax.legend(fontsize=5, loc="upper right")
-    ax.tick_params(labelsize=6)
-
-    fig.tight_layout()
-    _savefig(fig, "tradeoff.png")
-
-
-# --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 def main():
@@ -223,8 +184,6 @@ def main():
 
     plot_learning_curves(ref_multi_reward, ref_single_reward)
     plot_comparison(eval_multi_path, "compare_multi.png", "Multi (8 groups)")
-    plot_comparison(eval_single_path, "compare_single.png", f"Single (O+)")
-    plot_tradeoff()
 
     print("Done.")
 

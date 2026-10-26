@@ -31,25 +31,25 @@ Demand is **simulated, not from a dataset**, calibrated from published hospital 
 
 ```
 blood-bank-rl/
-├── env/                    # Gymnasium environment (Harsh)
+├── env/                    # Gymnasium environment
 │   ├── config.py           # Shared constants
 │   ├── blood_bank_env.py   # BloodBankEnv
 │   ├── demand.py           # Negative binomial demand model
 │   ├── wrappers.py         # DiscreteActionWrapper
 │   └── rollout.py          # run_episode()
-├── baselines/              # Heuristic policies (Harsh)
+├── baselines/              # Heuristic policies
 │   └── policies.py         # Random, MeanDemand, FixedOrder, YesterdayDemand
-├── agents/                 # RL agents (Aditya)
+├── agents/                 # RL agents
 │   ├── sb3_policy.py       # SB3 → policy.act() adapter
 │   ├── train_ppo.py        # PPO training
 │   └── train_dqn.py        # DQN training
-├── evaluate.py             # Evaluate all policies (Aditya)
-├── plots/make_plots.py     # Generate all figures (Aditya)
-├── run_all.sh              # Full pipeline script (Aditya)
-├── tests/test_env.py       # Environment tests (Harsh)
-├── scripts/                # Utility scripts (Harsh)
+├── evaluate.py             # Evaluate all policies
+├── plots/make_plots.py     # Generate all figures
+├── run_all.sh              # Full pipeline script
+├── tests/test_env.py       # Environment tests
+├── scripts/                # Utility scripts
 ├── models/                 # Trained models (.zip)
-├── results/                # CSV, JSON, markdown outputs
+├── results/                # CSV and markdown outputs
 ├── figures/                # PNG figures
 └── requirements.txt
 ```
@@ -136,8 +136,6 @@ Training variants and paired-seed comparisons are documented in `results/model_c
 ![Final policy comparison](figures/compare_multi.png)
 
 ![Training curves](figures/learning_curves.png)
-
-![Shortage and expiry trade-off](figures/tradeoff.png)
 
 ## Reproducibility
 
