@@ -36,18 +36,17 @@ class MeanDemandPolicy:
         return _to_action(base.expected_demand((base.day + 1) % 7), env)
 
 
-class BaseStockPolicy:
-    """Order-up-to rule: keep stock + pipeline at k days of mean demand.
-
-    S_g = k * mean daily demand of group g; order = S_g - (stock_g + pipeline_g), clipped.
-    """
-
-    def __init__(self, k: float):
-        self.k = k
+class FixedOrderPolicy:
+    """Orders the same amount every day: the average daily demand of each group."""
 
     def act(self, obs, env):
         base = env.unwrapped
         mean_daily = np.mean([base.expected_demand(w) for w in range(7)], axis=0)
-        target = self.k * mean_daily
-        position = base.stock.sum(axis=1) + base.pipeline
-        return _to_action(target - position, env)
+        return _to_action(mean_daily, env)
+
+
+class YesterdayDemandPolicy:
+    """Orders as many units as were demanded yesterday."""
+
+    def act(self, obs, env):
+        return _to_action(env.unwrapped.history[:, -1], env)

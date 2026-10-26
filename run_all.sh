@@ -9,9 +9,6 @@ pip install -r requirements.txt
 echo "=== Running tests ==="
 python -m pytest -q
 
-echo "=== Tuning base-stock baseline ==="
-python -m baselines.tune_base_stock
-
 echo "=== Generating demand profile figure ==="
 python -m scripts.plot_demand
 

@@ -40,6 +40,6 @@ COMPATIBLE_DONORS = {
     "AB-": ["A-", "B-", "O-"],
 }
 
-TUNE_SEEDS = list(range(500, 520))    # only for tuning the base-stock baseline
+TUNE_SEEDS = list(range(500, 520))    # held out for tuning, separate from training and evaluation seeds
 EVAL_SEEDS = list(range(1000, 1030))  # only for final evaluation (never for training or tuning)
 SINGLE_GROUP_DEFAULT = "O+"

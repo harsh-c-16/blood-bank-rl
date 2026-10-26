@@ -149,3 +149,22 @@ def test_unseeded_reset_continues_seeded_stream():
             out.append([env.step(np.zeros(8, dtype=int))[4]["demand"].tolist() for _ in range(5)])
         return out
     assert demands(make_env("multi")) == demands(make_env("multi"))
+
+
+def test_simple_baselines_order_sensibly():
+    from baselines import FixedOrderPolicy, YesterdayDemandPolicy
+
+    for mode in ["multi", "single"]:
+        env = make_env(mode)
+        env.reset(seed=0)
+        for policy in [FixedOrderPolicy(), YesterdayDemandPolicy()]:
+            action = policy.act(None, env)
+            if mode == "single":
+                assert isinstance(action, int) and 0 <= action <= C.MAX_ORDER
+            else:
+                assert action.shape == (8,) and (action >= 0).all() and (action <= C.MAX_ORDER).all()
+    # yesterday's demand is read from the history, so ordering it back is exact
+    env = make_env("multi")
+    env.reset(seed=0)
+    demand = env.step(np.zeros(8, dtype=int))[4]["demand"]
+    assert (YesterdayDemandPolicy().act(None, env) == np.clip(demand, 0, C.MAX_ORDER)).all()

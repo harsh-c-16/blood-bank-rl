@@ -38,8 +38,7 @@ blood-bank-rl/
 │   ├── wrappers.py         # DiscreteActionWrapper
 │   └── rollout.py          # run_episode()
 ├── baselines/              # Heuristic policies (Harsh)
-│   ├── policies.py         # Random, MeanDemand, BaseStock
-│   └── tune_base_stock.py  # Grid search for optimal k
+│   └── policies.py         # Random, MeanDemand, FixedOrder, YesterdayDemand
 ├── agents/                 # RL agents (Aditya)
 │   ├── sb3_policy.py       # SB3 → policy.act() adapter
 │   ├── train_ppo.py        # PPO training
@@ -89,9 +88,6 @@ SKIP_TRAIN=1 bash run_all.sh
 # Run tests
 python -m pytest -q
 
-# Tune base-stock baseline
-python -m baselines.tune_base_stock
-
 # Train RL agents
 python -m agents.train_ppo --mode multi --timesteps 1000000 --seed 41
 python -m agents.train_ppo --mode single --timesteps 500000 --seed 47
@@ -116,7 +112,8 @@ The active trained models are `models/ppo_multi.zip`, `models/ppo_single.zip`, a
 |---|---:|---:|---:|
 | Random | -1275.5 ± 18.7 | 0.0000 ± 0.0001 | 0.7261 ± 0.0054 |
 | MeanDemand | -172.6 ± 8.7 | 0.0524 ± 0.0103 | 0.0373 ± 0.0090 |
-| BaseStock (k=3.5) | -147.9 ± 4.1 | 0.0274 ± 0.0036 | 0.0281 ± 0.0029 |
+| FixedOrder | -163.6 ± 7.0 | 0.0341 ± 0.0081 | 0.0481 ± 0.0088 |
+| YesterdayDemand | -167.5 ± 4.4 | 0.0425 ± 0.0033 | 0.0437 ± 0.0035 |
 | PPO (1M steps) | -151.4 ± 4.8 | 0.0288 ± 0.0043 | 0.0021 ± 0.0007 |
 
 ### Single mode (O+)
@@ -125,11 +122,12 @@ The active trained models are `models/ppo_multi.zip`, `models/ppo_single.zip`, a
 |---|---:|---:|---:|
 | Random | -102.7 ± 6.9 | 0.0055 ± 0.0048 | 0.3033 ± 0.0289 |
 | MeanDemand | -51.3 ± 4.1 | 0.0348 ± 0.0141 | 0.0332 ± 0.0115 |
-| BaseStock (k=3.75) | -42.0 ± 1.7 | 0.0079 ± 0.0048 | 0.0180 ± 0.0057 |
+| FixedOrder | -51.1 ± 3.1 | 0.0214 ± 0.0114 | 0.0498 ± 0.0133 |
+| YesterdayDemand | -44.0 ± 2.4 | 0.0171 ± 0.0048 | 0.0180 ± 0.0044 |
 | DQN (500k steps) | -42.7 ± 1.7 | 0.0105 ± 0.0043 | 0.0197 ± 0.0072 |
 | PPO (500k steps) | -41.5 ± 1.8 | 0.0097 ± 0.0049 | 0.0120 ± 0.0055 |
 
-The 1M-step vanilla PPO substantially improves on the previous VecNormalize multi-group run (reward -473.5, shortage rate 0.4110) and approaches the tuned base-stock policy. Base-stock still has a slightly better mean reward (-147.9 vs. -151.4); PPO trades a small increase in shortage for much lower expiry. Longer single-group training modestly lowers shortage for PPO and DQN, but reward differences from the earlier 200k models are small and not clearly significant across the 30 paired seeds. The figures in `figures/` visualize these comparisons.
+The baselines are simple ordering rules: random orders, the mean demand of the arrival day, a fixed daily order equal to the average demand, and yesterday's demand. The 1M-step vanilla PPO substantially improves on the previous VecNormalize multi-group run (reward -473.5, shortage rate 0.4110) and beats every baseline; against the best baseline (FixedOrder) it gains 12.2 reward points per episode (95% paired CI +9.3 to +15.1, better on 26 of 30 seeds) and has far lower expiry. In single mode PPO beats the best baseline (YesterdayDemand) by 2.5 points (CI +1.8 to +3.3) and DQN by 1.3 points (CI +0.6 to +2.0). Longer single-group training modestly lowers shortage for PPO and DQN, but reward differences from the earlier 200k models are small and not clearly significant across the 30 paired seeds. The figures in `figures/` visualize these comparisons.
 
 Training variants and paired-seed comparisons are documented in `results/model_comparison.md`.
 
@@ -141,8 +139,8 @@ Training variants and paired-seed comparisons are documented in `results/model_c
 
 ## Reproducibility
 
-- **Training seeds**: each training env is seeded with 100 × `--seed` + env index (4100–4107 multi PPO, 4700–4707 single PPO) and DQN with 53, so training never uses the tuning or evaluation seeds
-- **Tuning seeds**: 500–519 (base-stock grid search)
+- **Training seeds**: each training env is seeded with 100 × `--seed` + env index (4100–4107 multi PPO, 4700–4707 single PPO) and DQN with 53, so training never uses the reserved or evaluation seeds
+- **Tuning seeds**: 500–519 (reserved, not used for training or evaluation)
 - **Evaluation seeds**: 1000–1029 (30 independent 365-day episodes)
 - All randomness is seeded through `env.reset(seed=...)` and SB3 model seeds; `reset()` without a seed continues the seeded stream
 - Trained models are committed to `models/` for exact reproduction with `SKIP_TRAIN=1`

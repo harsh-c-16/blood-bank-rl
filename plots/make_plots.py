@@ -68,8 +68,8 @@ def _load_monitor_data(log_dir: str) -> pd.DataFrame | None:
     return combined
 
 
-def plot_learning_curves(base_stock_multi: float | None = None,
-                          base_stock_single: float | None = None):
+def plot_learning_curves(ref_multi: float | None = None,
+                          ref_single: float | None = None):
     """Panel (a): PPO multi, Panel (b): DQN vs PPO single."""
     fig, axes = plt.subplots(1, 2, figsize=(COL_WIDTH * 2 + 0.5, 2.8))
 
@@ -81,9 +81,9 @@ def plot_learning_curves(base_stock_multi: float | None = None,
         smoothed = pd.Series(rewards).rolling(50, min_periods=1).mean()
         cumlen = data["l"].cumsum() if "l" in data.columns else np.arange(len(rewards))
         ax.plot(cumlen, smoothed, linewidth=0.8, color="#2196F3", label="PPO")
-        if base_stock_multi is not None:
-            ax.axhline(base_stock_multi, color="#FF5722", linestyle="--",
-                       linewidth=0.8, label=f"BaseStock (k*)")
+        if ref_multi is not None:
+            ax.axhline(ref_multi, color="#FF5722", linestyle="--",
+                       linewidth=0.8, label="MeanDemand")
         ax.legend(fontsize=6)
     ax.set_xlabel("Timesteps", fontsize=7)
     ax.set_ylabel("Episode Reward", fontsize=7)
@@ -100,9 +100,9 @@ def plot_learning_curves(base_stock_multi: float | None = None,
             smoothed = pd.Series(rewards).rolling(50, min_periods=1).mean()
             cumlen = data["l"].cumsum() if "l" in data.columns else np.arange(len(rewards))
             ax.plot(cumlen, smoothed, linewidth=0.8, color=color, label=label)
-    if base_stock_single is not None:
-        ax.axhline(base_stock_single, color="#FF5722", linestyle="--",
-                   linewidth=0.8, label=f"BaseStock (k*)")
+    if ref_single is not None:
+        ax.axhline(ref_single, color="#FF5722", linestyle="--",
+                   linewidth=0.8, label="MeanDemand")
     ax.legend(fontsize=6)
     ax.set_xlabel("Timesteps", fontsize=7)
     ax.set_ylabel("Episode Reward", fontsize=7)
@@ -137,7 +137,7 @@ def plot_comparison(csv_path: str, out_name: str, title_suffix: str):
         ax.bar(x + i * w - w / 2, means, w, yerr=stds, label=label,
                color=color, alpha=0.85, capsize=2, error_kw={"linewidth": 0.5})
     ax.set_xticks(x)
-    ax.set_xticklabels(policies, fontsize=6, rotation=15)
+    ax.set_xticklabels(policies, fontsize=6, rotation=30, ha="right")
     ax.set_ylabel("Rate", fontsize=7)
     ax.set_title(f"Shortage & Expiry — {title_suffix}", fontsize=8)
     ax.legend(fontsize=6)
@@ -147,11 +147,11 @@ def plot_comparison(csv_path: str, out_name: str, title_suffix: str):
     ax = axes[1]
     means = [df[df["policy"] == p]["total_reward"].mean() for p in policies]
     stds = [df[df["policy"] == p]["total_reward"].std() for p in policies]
-    colors = ["#9E9E9E", "#2196F3", "#4CAF50", "#FF9800", "#E91E63"][:n]
+    colors = ["#9E9E9E", "#2196F3", "#4CAF50", "#795548", "#FF9800", "#E91E63"][:n]
     ax.bar(x, means, yerr=stds, color=colors, alpha=0.85, capsize=2,
            error_kw={"linewidth": 0.5})
     ax.set_xticks(x)
-    ax.set_xticklabels(policies, fontsize=6, rotation=15)
+    ax.set_xticklabels(policies, fontsize=6, rotation=30, ha="right")
     ax.set_ylabel("Total Reward", fontsize=7)
     ax.set_title(f"Total Reward — {title_suffix}", fontsize=8)
     ax.tick_params(labelsize=6)
@@ -164,7 +164,7 @@ def plot_comparison(csv_path: str, out_name: str, title_suffix: str):
 # 4. Daily trace plot
 # --------------------------------------------------------------------------- #
 def plot_trace(trace_path: str, out_name: str, days: int = 60):
-    """60-day window of demand, stock, and shortage for PPO vs BaseStock."""
+    """60-day window of demand, stock, and shortage for PPO vs MeanDemand."""
     if not os.path.exists(trace_path):
         print(f"  Skipping trace plot: {trace_path} not found")
         return
@@ -177,7 +177,7 @@ def plot_trace(trace_path: str, out_name: str, days: int = 60):
     t = np.arange(days)
     for i, (name, color_d, color_s) in enumerate([
         ("PPO", "#2196F3", "#90CAF9"),
-        ("BaseStock", "#FF5722", "#FFAB91"),
+        ("MeanDemand", "#FF5722", "#FFAB91"),
     ]):
         if name not in traces:
             continue
@@ -212,36 +212,22 @@ def plot_trace(trace_path: str, out_name: str, days: int = 60):
 # 5. Trade-off frontier
 # --------------------------------------------------------------------------- #
 def plot_tradeoff():
-    """Expiry rate (x) vs shortage rate (y): BaseStock sweep curve + policy points."""
-    sweep_path = os.path.join(RES_DIR, "base_stock_sweep.csv")
+    """Expiry rate (x) vs shortage rate (y) of every evaluated policy."""
     eval_path = os.path.join(RES_DIR, "eval_multi.csv")
 
-    if not os.path.exists(sweep_path) or not os.path.exists(eval_path):
+    if not os.path.exists(eval_path):
         print("  Skipping tradeoff plot: required files not found")
         return
-
-    sweep = pd.read_csv(sweep_path)
-    sweep_multi = sweep[sweep["mode"] == "multi"].sort_values("k")
 
     eval_df = pd.read_csv(eval_path)
 
     fig, ax = plt.subplots(figsize=(COL_WIDTH, COL_WIDTH * 0.8))
 
-    # BaseStock frontier
-    ax.plot(sweep_multi["expiry_rate"], sweep_multi["shortage_rate"],
-            "o-", color="#9E9E9E", markersize=3, linewidth=1, label="BaseStock (sweep)",
-            zorder=2)
-    # Annotate some k values
-    for _, row in sweep_multi.iterrows():
-        k = row["k"]
-        if k in [1.5, 2.5, 3.5, 5.0]:
-            ax.annotate(f"k={k:.1f}", (row["expiry_rate"], row["shortage_rate"]),
-                       fontsize=4, textcoords="offset points", xytext=(3, 3))
-
     # Evaluated policies as points
-    colors = {"Random": "#9E9E9E", "MeanDemand": "#2196F3",
-              "BaseStock": "#4CAF50", "PPO": "#E91E63", "DQN": "#FF9800"}
-    markers = {"Random": "s", "MeanDemand": "D", "BaseStock": "^", "PPO": "*", "DQN": "p"}
+    colors = {"Random": "#9E9E9E", "MeanDemand": "#2196F3", "FixedOrder": "#4CAF50",
+              "YesterdayDemand": "#795548", "PPO": "#E91E63", "DQN": "#FF9800"}
+    markers = {"Random": "s", "MeanDemand": "D", "FixedOrder": "^", "YesterdayDemand": "v",
+               "PPO": "*", "DQN": "p"}
 
     for policy in eval_df["policy"].unique():
         sub = eval_df[eval_df["policy"] == policy]
@@ -264,7 +250,7 @@ def plot_tradeoff():
 # 6. Per-group comparison (optional)
 # --------------------------------------------------------------------------- #
 def plot_per_group():
-    """Per blood group shortage & expiry for PPO vs BaseStock."""
+    """Per blood group shortage & expiry for PPO vs MeanDemand."""
     trace_path = os.path.join(RES_DIR, "trace_multi.json")
     if not os.path.exists(trace_path):
         print("  Skipping per-group plot: trace_multi.json not found")
@@ -273,8 +259,8 @@ def plot_per_group():
     with open(trace_path) as f:
         traces = json.load(f)
 
-    if "PPO" not in traces or "BaseStock" not in traces:
-        print("  Skipping per-group plot: PPO or BaseStock trace missing")
+    if "PPO" not in traces or "MeanDemand" not in traces:
+        print("  Skipping per-group plot: PPO or MeanDemand trace missing")
         return
 
     groups = traces["PPO"]["groups"]
@@ -287,7 +273,7 @@ def plot_per_group():
 
     for i, (metric, title) in enumerate([("shortage", "Shortage"), ("expired", "Expiry")]):
         ax = axes[i]
-        for j, (name, color) in enumerate([("BaseStock", "#4CAF50"), ("PPO", "#E91E63")]):
+        for j, (name, color) in enumerate([("MeanDemand", "#4CAF50"), ("PPO", "#E91E63")]):
             vals = np.array(traces[name]["per_group"][metric], dtype=float)
             demand = np.array(traces[name]["per_group"]["demand"], dtype=float)
             rates = np.where(demand > 0, vals / demand, 0)
@@ -310,24 +296,24 @@ def plot_per_group():
 def main():
     print("Generating figures ...")
 
-    # Get BaseStock reward for learning curve reference lines
-    bs_multi_reward, bs_single_reward = None, None
+    # Get MeanDemand reward for learning curve reference lines
+    ref_multi_reward, ref_single_reward = None, None
     eval_multi_path = os.path.join(RES_DIR, "eval_multi.csv")
     eval_single_path = os.path.join(RES_DIR, "eval_single.csv")
 
     if os.path.exists(eval_multi_path):
         df = pd.read_csv(eval_multi_path)
-        bs = df[df["policy"] == "BaseStock"]
-        if len(bs) > 0:
-            bs_multi_reward = bs["total_reward"].mean()
+        ref = df[df["policy"] == "MeanDemand"]
+        if len(ref) > 0:
+            ref_multi_reward = ref["total_reward"].mean()
 
     if os.path.exists(eval_single_path):
         df = pd.read_csv(eval_single_path)
-        bs = df[df["policy"] == "BaseStock"]
-        if len(bs) > 0:
-            bs_single_reward = bs["total_reward"].mean()
+        ref = df[df["policy"] == "MeanDemand"]
+        if len(ref) > 0:
+            ref_single_reward = ref["total_reward"].mean()
 
-    plot_learning_curves(bs_multi_reward, bs_single_reward)
+    plot_learning_curves(ref_multi_reward, ref_single_reward)
     plot_comparison(eval_multi_path, "compare_multi.png", "Multi (8 groups)")
     plot_comparison(eval_single_path, "compare_single.png", f"Single (O+)")
     plot_trace(os.path.join(RES_DIR, "trace_multi.json"), "trace_multi.png")
