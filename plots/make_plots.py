@@ -161,54 +161,6 @@ def plot_comparison(csv_path: str, out_name: str, title_suffix: str):
 
 
 # --------------------------------------------------------------------------- #
-# 4. Daily trace plot
-# --------------------------------------------------------------------------- #
-def plot_trace(trace_path: str, out_name: str, days: int = 60):
-    """60-day window of demand, stock, and shortage for PPO vs MeanDemand."""
-    if not os.path.exists(trace_path):
-        print(f"  Skipping trace plot: {trace_path} not found")
-        return
-
-    with open(trace_path) as f:
-        traces = json.load(f)
-
-    fig, axes = plt.subplots(2, 1, figsize=(COL_WIDTH * 2, 3.5), sharex=True)
-
-    t = np.arange(days)
-    for i, (name, color_d, color_s) in enumerate([
-        ("PPO", "#2196F3", "#90CAF9"),
-        ("MeanDemand", "#FF5722", "#FFAB91"),
-    ]):
-        if name not in traces:
-            continue
-        daily = traces[name]["daily"]
-        demand = np.array(daily["demand"][:days])
-        stock = np.array(daily["stock_end"][:days])
-        shortage = np.array(daily["shortage"][:days])
-
-        ax = axes[i]
-        ax.fill_between(t, stock, alpha=0.3, color=color_s, label="Stock")
-        ax.plot(t, demand, linewidth=0.8, color=color_d, label="Demand")
-        ax.plot(t, stock, linewidth=0.8, color=color_s)
-
-        # Mark shortage days
-        shortage_days = t[shortage > 0]
-        if len(shortage_days) > 0:
-            ax.scatter(shortage_days, demand[shortage > 0], marker="x",
-                      color="#D32F2F", s=10, zorder=5, label="Shortage")
-
-        ax.set_ylabel("Units", fontsize=7)
-        ax.set_title(f"{name}", fontsize=8)
-        ax.legend(fontsize=5, loc="upper right")
-        ax.tick_params(labelsize=6)
-
-    axes[-1].set_xlabel("Day", fontsize=7)
-    fig.suptitle("Daily demand, stock & shortages (seed 1000, multi)", fontsize=8, y=1.01)
-    fig.tight_layout()
-    _savefig(fig, out_name)
-
-
-# --------------------------------------------------------------------------- #
 # 5. Trade-off frontier
 # --------------------------------------------------------------------------- #
 def plot_tradeoff():
@@ -247,50 +199,6 @@ def plot_tradeoff():
 
 
 # --------------------------------------------------------------------------- #
-# 6. Per-group comparison (optional)
-# --------------------------------------------------------------------------- #
-def plot_per_group():
-    """Per blood group shortage & expiry for PPO vs MeanDemand."""
-    trace_path = os.path.join(RES_DIR, "trace_multi.json")
-    if not os.path.exists(trace_path):
-        print("  Skipping per-group plot: trace_multi.json not found")
-        return
-
-    with open(trace_path) as f:
-        traces = json.load(f)
-
-    if "PPO" not in traces or "MeanDemand" not in traces:
-        print("  Skipping per-group plot: PPO or MeanDemand trace missing")
-        return
-
-    groups = traces["PPO"]["groups"]
-    G = len(groups)
-
-    fig, axes = plt.subplots(1, 2, figsize=(COL_WIDTH * 2 + 0.5, 2.8))
-
-    x = np.arange(G)
-    w = 0.35
-
-    for i, (metric, title) in enumerate([("shortage", "Shortage"), ("expired", "Expiry")]):
-        ax = axes[i]
-        for j, (name, color) in enumerate([("MeanDemand", "#4CAF50"), ("PPO", "#E91E63")]):
-            vals = np.array(traces[name]["per_group"][metric], dtype=float)
-            demand = np.array(traces[name]["per_group"]["demand"], dtype=float)
-            rates = np.where(demand > 0, vals / demand, 0)
-            ax.bar(x + j * w - w / 2, rates, w, color=color, alpha=0.85, label=name)
-
-        ax.set_xticks(x)
-        ax.set_xticklabels(groups, fontsize=5, rotation=45)
-        ax.set_ylabel(f"{title} Rate", fontsize=7)
-        ax.set_title(f"{title} by Blood Group", fontsize=8)
-        ax.legend(fontsize=6)
-        ax.tick_params(labelsize=6)
-
-    fig.tight_layout()
-    _savefig(fig, "per_group_multi.png")
-
-
-# --------------------------------------------------------------------------- #
 # Main
 # --------------------------------------------------------------------------- #
 def main():
@@ -316,9 +224,7 @@ def main():
     plot_learning_curves(ref_multi_reward, ref_single_reward)
     plot_comparison(eval_multi_path, "compare_multi.png", "Multi (8 groups)")
     plot_comparison(eval_single_path, "compare_single.png", f"Single (O+)")
-    plot_trace(os.path.join(RES_DIR, "trace_multi.json"), "trace_multi.png")
     plot_tradeoff()
-    plot_per_group()
 
     print("Done.")
 

@@ -6,8 +6,7 @@ from baselines import MeanDemandPolicy, RandomPolicy
 from env import make_env
 from env.rollout import run_episode
 
-METRICS = ["total_reward", "demand", "shortage", "substituted", "expired", "avg_stock",
-           "service_level", "expiry_rate"]
+METRICS = ["total_reward", "demand", "shortage", "substituted", "expired", "expiry_rate"]
 
 
 def main():

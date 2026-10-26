@@ -106,6 +106,8 @@ Results below are means over 30 evaluation seeds (1000--1029); values are mean Â
 
 The active trained models are `models/ppo_multi.zip`, `models/ppo_single.zip`, and `models/dqn_single.zip`. The multi-group PPO uses the original observation scale; observation normalization produced worse held-out results in our comparison.
 
+**Metrics.** Total reward is the sum of the daily rewards over the 365-day episode. Shortage rate = units of unmet demand / units demanded. Expiry rate = units expired / units that arrived from the blood centre.
+
 ### Multi mode (eight groups)
 
 | Policy | Total reward | Shortage rate | Expiry rate |

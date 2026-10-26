@@ -3,7 +3,6 @@
 Usage:
     python -m evaluate
 """
-import json
 import os
 import warnings
 
@@ -16,10 +15,9 @@ from env import make_env
 from env.config import EVAL_SEEDS, SINGLE_GROUP_DEFAULT
 from env.rollout import run_episode
 
-METRICS = ["total_reward", "shortage_rate", "expiry_rate", "avg_stock", "service_level"]
+METRICS = ["total_reward", "shortage_rate", "expiry_rate"]
 SCALAR_KEYS = ["total_reward", "demand", "issued", "substituted", "shortage",
-               "expired", "arrived", "ordered", "avg_stock",
-               "shortage_rate", "expiry_rate", "service_level"]
+               "expired", "arrived", "ordered", "shortage_rate", "expiry_rate"]
 
 
 def _load_model(cls, path: str):
@@ -50,44 +48,20 @@ def _evaluate_mode(mode: str, policies: dict, seeds: list) -> pd.DataFrame:
 
 def _summary_table(df: pd.DataFrame) -> str:
     """Produce a markdown table of mean +/- std for each policy."""
-    lines = ["| Policy | Total Reward | Shortage Rate | Expiry Rate | Avg Stock | Service Level |",
-             "|--------|-------------|---------------|-------------|-----------|---------------|"]
+    lines = ["| Policy | Total Reward | Shortage Rate | Expiry Rate |",
+             "|--------|-------------|---------------|-------------|"]
     for policy in df["policy"].unique():
         sub = df[df["policy"] == policy]
         vals = []
         for m in METRICS:
             mean = sub[m].mean()
             std = sub[m].std()
-            if m in ("shortage_rate", "expiry_rate", "service_level"):
+            if m != "total_reward":
                 vals.append(f"{mean:.4f} ± {std:.4f}")
             else:
                 vals.append(f"{mean:.1f} ± {std:.1f}")
         lines.append(f"| {policy} | " + " | ".join(vals) + " |")
     return "\n".join(lines)
-
-
-def _save_traces(mode: str, policies: dict, seed: int = 1000):
-    """Save daily traces and per-group data for the trace seed."""
-    trace_data = {}
-    for name in ["PPO", "MeanDemand"]:
-        policy = policies.get(name)
-        if policy is None:
-            continue
-        env = make_env(mode, SINGLE_GROUP_DEFAULT)
-        result = run_episode(env, policy, seed)
-        trace_data[name] = {
-            "daily": result["daily"],
-            "per_group": result["per_group"],
-            "groups": result["groups"],
-            "total_reward": result["total_reward"],
-            "shortage_rate": result["shortage_rate"],
-            "expiry_rate": result["expiry_rate"],
-        }
-        env.close()
-    path = os.path.join("results", f"trace_{mode}.json")
-    with open(path, "w") as f:
-        json.dump(trace_data, f, indent=2)
-    print(f"  Saved traces to {path}")
 
 
 def main():
@@ -107,8 +81,6 @@ def main():
 
     df_multi = _evaluate_mode("multi", multi_policies, EVAL_SEEDS)
     df_multi.to_csv(os.path.join("results", "eval_multi.csv"), index=False)
-
-    _save_traces("multi", multi_policies)
 
     # --- Single mode ---
     print("\n=== Single mode ===")

@@ -86,8 +86,8 @@ def test_seeding():
     a = run_episode(env, RandomActions(0), seed=7)
     b = run_episode(env, RandomActions(0), seed=7)
     c = run_episode(env, RandomActions(0), seed=8)
-    assert a["daily"] == b["daily"] and a["total_reward"] == b["total_reward"]
-    assert a["daily"]["demand"] != c["daily"]["demand"]
+    assert a == b
+    assert a["demand"] != c["demand"]
 
 
 @pytest.mark.parametrize("mode", ["multi", "single"])
@@ -105,15 +105,9 @@ def test_truncation(mode):
 def test_run_episode_keys():
     out = run_episode(make_env("multi"), RandomActions(), seed=0)
     scalars = ["total_reward", "demand", "issued", "substituted", "shortage", "expired", "arrived",
-               "ordered", "avg_stock", "shortage_rate", "expiry_rate", "service_level"]
-    for k in scalars:
-        assert np.isscalar(out[k]), k
-    assert set(out["daily"]) == {"demand", "shortage", "expired", "stock_end", "ordered"}
-    assert all(len(v) == C.EPISODE_DAYS for v in out["daily"].values())
-    assert set(out["per_group"]) == {"demand", "shortage", "expired"}
-    assert all(len(v) == 8 for v in out["per_group"].values())
-    assert out["groups"] == C.GROUPS
-    assert out["service_level"] == pytest.approx(1 - out["shortage_rate"])
+               "ordered", "shortage_rate", "expiry_rate"]
+    assert set(out) == set(scalars)
+    assert out["shortage_rate"] == out["shortage"] / out["demand"]
 
 
 def test_mean_demand_matches_target():
